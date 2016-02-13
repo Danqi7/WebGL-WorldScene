@@ -160,7 +160,76 @@ function makeGroundGrid() {
 
 function makeRoboticarm()
 {
-  
+//make a list of vertces that make robotic arms
+armVerts = new Float32Array([
+     //0,1,2
+     0.25,   0.50,   0.25,     1.0,  1.0,  1.0,  // v0 White
+    -0.25,   0.50,   0.25,     1.0,  0.0,  1.0,  // v1 Magenta
+    -0.25,  -0.50,   0.25,     1.0,  0.0,  0.0,  // v2 Red
+     //0,2,3
+     0.25,   0.50,   0.25,     1.0,  1.0,  1.0,
+    -0.25,  -0.50,   0.25,     1.0,  0.0,  0.0,
+     0.25,  -0.50,   0.25,     1.0,  1.0,  0.0,
+
+     //0,3,4
+     0.25,   0.50,   0.25,     1.0,  1.0,  1.0,
+     0.25,  -0.50,   0.25,     1.0,  1.0,  0.0,
+     0.25,  -0.50,  -0.25,     0.0,  1.0,  0.0,
+
+     //0,4,5
+     0.25,   0.50,   0.25,     1.0,  1.0,  1.0,
+     0.25,  -0.50,  -0.25,     0.0,  1.0,  0.0,
+     0.25,   0.50,  -0.25,     0.0,  1.0,  1.0,
+
+     //0, 5, 6,  
+     0.25,   0.50,   0.25,     1.0,  1.0,  1.0,
+     0.25,   0.50,  -0.25,     0.0,  1.0,  1.0,
+     -0.25,   0.50,  -0.25,     0.0,  0.0,  1.0,
+
+     //0, 6, 1,
+     0.25,   0.50,   0.25,     1.0,  1.0,  1.0,
+     -0.25,   0.50,  -0.25,     0.0,  0.0,  1.0,
+     -0.25,   0.50,   0.25,     1.0,  0.0,  1.0, 
+
+     //1, 6, 7, 
+     -0.25,   0.50,   0.25,     1.0,  0.0,  1.0,
+     -0.25,   0.50,  -0.25,     0.0,  0.0,  1.0,
+     -0.25,  -0.50,  -0.25,     0.0,  0.0,  0.0,
+
+     //1, 7, 2, 
+     -0.25,   0.50,   0.25,     1.0,  0.0,  1.0,
+     -0.25,  -0.50,  -0.25,     0.0,  0.0,  0.0,
+     -0.25,  -0.50,   0.25,     1.0,  0.0,  0.0,
+
+     //7, 4, 3,
+     -0.25,  -0.50,  -0.25,     0.0,  0.0,  0.0,
+      0.25,  -0.50,  -0.25,     0.0,  1.0,  0.0,
+      0.25,  -0.50,   0.25,     1.0,  1.0,  0.0,
+
+     //7, 3, 2,
+     -0.25,  -0.50,  -0.25,     0.0,  0.0,  0.0,
+     0.25,  -0.50,   0.25,     1.0,  1.0,  0.0,
+     -0.25,  -0.50,   0.25,     1.0,  0.0,  0.0,
+
+     //4, 7, 6,
+     0.25,  -0.50,  -0.25,     0.0,  1.0,  0.0,
+     -0.25,  -0.50,  -0.25,     0.0,  0.0,  0.0,
+     -0.25,   0.50,  -0.25,     0.0,  0.0,  1.0,
+
+     //4, 6, 5,
+     0.25,  -0.50,  -0.25,     0.0,  1.0,  0.0,
+     -0.25,  -0.50,  -0.25,     0.0,  0.0,  0.0,
+     0.25,   0.50,  -0.25,     0.0,  1.0,  1.0,
+
+     //0.25,  -0.50,   0.25,     1.0,  1.0,  0.0,  // v3 Yellow
+     //0.25,  -0.50,  -0.25,     0.0,  1.0,  0.0,  // v4 Green
+     //0.25,   0.50,  -0.25,     0.0,  1.0,  1.0,  // v5 Cyan
+   // -0.25,   0.50,  -0.25,     0.0,  0.0,  1.0,  // v6 Blue
+    //-0.25,  -0.50,  -0.25,     0.0,  0.0,  0.0,   // v7 Black
+  ]);
+
+
+
 }
 
 function initVertexBuffers(gl) {
@@ -185,10 +254,11 @@ function initVertexBuffers(gl) {
   // Make our 'ground plane'; can you make a'torus' shape too?
   // (recall the 'basic shapes' starter code...)
   makeGroundGrid();
+  makeRoboticarm();
 
 	// How much space to store all the shapes in one array?
 	// (no 'var' means this is a global variable)
-	mySiz = forestVerts.length + gndVerts.length;
+	mySiz = forestVerts.length + gndVerts.length + armVerts.length;
 
 	// How many vertices total?
 	var nn = mySiz / floatsPerVertex;
@@ -204,7 +274,13 @@ function initVertexBuffers(gl) {
   forestStart = i;              // we store the forest first.
   for(j=0; j< forestVerts.length; i++,j++) {
     verticesColors[i] = forestVerts[j];
-    } 
+    }
+  armStart = i;
+  for (j=0; j < armVerts.length; i++,j++)
+  {
+    verticesColors[i] = armVerts[j];
+  }  
+    
 
   
   // Create a vertex buffer object (VBO)
@@ -349,6 +425,9 @@ function drawMyScene(myGL, myu_ViewMatrix, myViewMatrix) {
   myGL.drawArrays(myGL.TRIANGLES, 				// use this drawing primitive, and
   						  forestStart/floatsPerVertex,	// start at this vertex number, and
   						  forestVerts.length/floatsPerVertex);	// draw this many vertices.
+  myGL.drawArrays(myGL.TRIANGLES,
+                armStart/floatsPerVertex,
+                armVerts.length/floatsPerVertex);
   
  // Rotate to make a new set of 'world' drawing axes: 
  // old one had "+y points upwards", but
