@@ -11,11 +11,12 @@
 var VSHADER_SOURCE =
   'attribute vec4 a_Position;\n' +
   'attribute vec4 a_Color;\n' +
+  'uniform mat4 u_ModelMatrix;\n' +
   'uniform mat4 u_ViewMatrix;\n' +
   'uniform mat4 u_ProjMatrix;\n' +
   'varying vec4 v_Color;\n' +
   'void main() {\n' +
-  '  gl_Position = u_ProjMatrix * u_ViewMatrix * a_Position;\n' +
+  '  gl_Position = u_ProjMatrix * u_ViewMatrix * u_ModelMatrix * a_Position;\n' +
   '  v_Color = a_Color;\n' +
   '}\n';
 
@@ -31,7 +32,7 @@ var FSHADER_SOURCE =
   
 var floatsPerVertex = 6;	// # of Float32Array elements used for each vertex
 													// (x,y,z)position + (r,g,b)color
-
+var ANGLE_STEP = 45.0; 
 
 function main() {
 //==============================================================================
@@ -67,6 +68,16 @@ function main() {
   // Specify the color for clearing <canvas>
   gl.clearColor(0.25, 0.2, 0.25, 1.0);
 
+  // Get handle to graphics system's storage location of u_ModelMatrix
+  var u_ModelMatrix = gl.getUniformLocation(gl.program, 'u_ModelMatrix');
+  if (!u_ModelMatrix) 
+  { 
+    console.log('Failed to get the storage location of u_ModelMatrix');
+    return;
+  }
+
+  var ModelMatrix = new Matrix4();
+
   // Get the graphics system storage locations of
   // the uniform variables u_ViewMatrix and u_ProjMatrix.
   var u_ViewMatrix = gl.getUniformLocation(gl.program, 'u_ViewMatrix');
@@ -75,11 +86,11 @@ function main() {
     console.log('Failed to get u_ViewMatrix or u_ProjMatrix');
     return;
   }
-
+  var currentAngle = 0;
   // Create a JavaScript matrix to specify the view transformation
   var viewMatrix = new Matrix4();
   // Register the event handler to be called on key press
- document.onkeydown= function(ev){keydown(ev, gl, u_ViewMatrix, viewMatrix); };
+ document.onkeydown= function(ev){keydown(ev, gl, currentAngle, u_ViewMatrix, viewMatrix, ModelMatrix, u_ModelMatrix); };
 	// (Note that I eliminated the 'n' argument (no longer needed)).
 	
   // Create the matrix to specify the camera frustum, 
@@ -102,7 +113,36 @@ function main() {
 	// 'uniform' variable u_ProjMatrix:
   gl.uniformMatrix4fv(u_ProjMatrix, false, projMatrix.elements);
 
-  draw(gl, u_ViewMatrix, viewMatrix);   // Draw the triangles
+  // ANIMATION: create 'tick' variable whose value is this function:
+  //----------------- 
+  var tick = function() {
+    currentAngle = animate(currentAngle);  // Update the rotation angle
+    draw(gl, currentAngle, u_ViewMatrix, viewMatrix, ModelMatrix, u_ModelMatrix);   // Draw shapes
+  // console.log('currentAngle=',currentAngle); // put text in console.
+    requestAnimationFrame(tick, canvas);   
+                      // Request that the browser re-draw the webpage
+                      // (causes webpage to endlessly re-draw itself)
+  };
+  tick();             // start (and continue) animation: draw current image
+  
+     // Draw the triangles
+}
+
+// Record the last time we called 'animate()':  (used for animation timing)
+var g_last = Date.now();
+
+function animate(angle) {
+//==============================================================================
+  // Calculate the elapsed time
+  var now = Date.now();
+  var elapsed = now - g_last;
+  g_last = now;
+  
+  // Update the current rotation angle (adjusted by the elapsed time)
+  var newAngle = angle + (ANGLE_STEP * elapsed) / 1000.0;
+  if(newAngle > 180.0) newAngle = newAngle - 360.0;
+  if(newAngle <-180.0) newAngle = newAngle + 360.0;
+  return newAngle;
 }
 
 function makeGroundGrid() {
@@ -323,7 +363,7 @@ var g_EyeX = 0.20, g_EyeY = 0.25, g_EyeZ = 4.25;
 // the 'keydown()' function's effect on g_EyeX position.
 
 
-function keydown(ev, gl, u_ViewMatrix, viewMatrix) {
+function keydown(ev, gl, currentAngle, u_ViewMatrix, viewMatrix, ModelMatrix, u_ModelMatrix) {
 //------------------------------------------------------
 //HTML calls this'Event handler' or 'callback function' when we press a key:
 
@@ -335,10 +375,10 @@ function keydown(ev, gl, u_ViewMatrix, viewMatrix) {
 //      g_EyeX -= 0.01;
 				g_EyeX -= 0.1;		// INCREASED for perspective camera)
     } else { return; } // Prevent the unnecessary drawing
-    draw(gl, u_ViewMatrix, viewMatrix);    
+    draw(gl, currentAngle, u_ViewMatrix, viewMatrix, ModelMatrix, u_ModelMatrix);    
 }
 
-function draw(gl, u_ViewMatrix, viewMatrix) {
+function draw(gl, currentAngle, u_ViewMatrix, viewMatrix, ModelMatrix, u_ModelMatrix) {
 //==============================================================================
   
   // Clear <canvas> color AND DEPTH buffer
@@ -369,7 +409,7 @@ function draw(gl, u_ViewMatrix, viewMatrix) {
   gl.uniformMatrix4fv(u_ViewMatrix, false, viewMatrix.elements);
 
 	// Draw the scene:
-	drawMyScene(gl, u_ViewMatrix, viewMatrix);
+	drawMyScene(gl, currentAngle, u_ViewMatrix, viewMatrix, ModelMatrix, u_ModelMatrix);
  
     // Draw in the SECOND of several 'viewports'
   //------------------------------------------
@@ -384,10 +424,11 @@ function draw(gl, u_ViewMatrix, viewMatrix) {
   										0, 1, 0);									// up vector
 
   // Pass the view projection matrix to our shaders:
+  //gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
   gl.uniformMatrix4fv(u_ViewMatrix, false, viewMatrix.elements);
 
 	// Draw the scene:
-	drawMyScene(gl, u_ViewMatrix, viewMatrix);
+	drawMyScene(gl, currentAngle, u_ViewMatrix, viewMatrix, ModelMatrix, u_ModelMatrix);
     
         // Draw in the THIRD of several 'viewports'
   //------------------------------------------
@@ -410,7 +451,7 @@ function draw(gl, u_ViewMatrix, viewMatrix) {
 
 }
 
-function drawMyScene(myGL, myu_ViewMatrix, myViewMatrix) {
+function drawMyScene(myGL, currentAngle, myu_ViewMatrix, myViewMatrix, modelMatrix, u_ModelMatrix) {
 //===============================================================================
 // Called ONLY from within the 'draw()' function
 // Assumes already-correctly-set View matrix and Proj matrix; 
@@ -419,15 +460,25 @@ function drawMyScene(myGL, myu_ViewMatrix, myViewMatrix) {
 	// DON'T clear <canvas> or you'll WIPE OUT what you drew 
 	// in all previous viewports!
 	// myGL.clear(gl.COLOR_BUFFER_BIT);  						
-  
+  modelMatrix.setIdentity();
   // Draw the 'forest' in the current 'world' coord system:
   // (where +y is 'up', as defined by our setLookAt() function call above...)
+  myGL.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
   myGL.drawArrays(myGL.TRIANGLES, 				// use this drawing primitive, and
   						  forestStart/floatsPerVertex,	// start at this vertex number, and
   						  forestVerts.length/floatsPerVertex);	// draw this many vertices.
+
+  pushMatrix(modelMatrix);
+
+  modelMatrix.setTranslate(-0.5,0.2,0.0);
+  modelMatrix.rotate(currentAngle,0,1,0);
+  myGL.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
   myGL.drawArrays(myGL.TRIANGLES,
                 armStart/floatsPerVertex,
                 armVerts.length/floatsPerVertex);
+
+  modelMatrix = popMatrix();
+  myGL.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
   
  // Rotate to make a new set of 'world' drawing axes: 
  // old one had "+y points upwards", but
