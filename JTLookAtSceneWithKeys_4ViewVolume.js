@@ -317,22 +317,6 @@ console.log("what the heck: ", armVerts.length)
 
 function initVertexBuffers(gl) {
 //==============================================================================
-
-  // make our 'forest' of triangular-shaped trees:
-  forestVerts = new Float32Array([
-    // 3 Vertex coordinates (x,y,z) and 3 colors (r,g,b)
-     0.0,  0.5,  -0.4, 1.0,  0.4,  1.0,  0.4,     0,0,1,0,// The back green one
-    -0.5, -0.5,  -0.4, 1.0,  0.4,  1.0,  0.4,     0,0,1,0,
-     0.5, -0.5,  -0.4, 1.0,  1.0,  0.4,  0.4,     0,0,1,0,
-   
-     0.5,  0.4,  -0.2, 1.0,  1.0,  0.4,  0.4,     0,0,1,0,// The middle yellow one
-    -0.5,  0.4,  -0.2, 1.0,  1.0,  1.0,  0.4,     0,0,1,0,
-     0.0, -0.6,  -0.2, 1.0,  1.0,  1.0,  0.4,     0,0,1,0,
-
-     0.0,  0.5,   0.0,  1.0, 0.4,  0.4,  1.0,     0,0,1,0,// The front blue one 
-    -0.5, -0.5,   0.0,  1.0, 0.4,  0.4,  1.0,     0,0,1,0,
-     0.5, -0.5,   0.0,  1.0, 1.0,  0.4,  0.4,     0,0,1,0,
-  ]);
   
   // Make our 'ground plane'; can you make a'torus' shape too?
   // (recall the 'basic shapes' starter code...)
@@ -341,9 +325,9 @@ function initVertexBuffers(gl) {
 
   // How much space to store all the shapes in one array?
   // (no 'var' means this is a global variable)
-  mySiz = forestVerts.length + gndVerts.length + armVerts.length;
+  mySiz = gndVerts.length + armVerts.length;
 
-  console.log("forestVerts numeber is ", forestVerts.length);
+  //console.log("forestVerts numeber is ", forestVerts.length);
   console.log("gndVerts numeber is ", gndVerts.length);
    console.log("armVerts numeber is ", armVerts.length);
 
@@ -357,10 +341,6 @@ function initVertexBuffers(gl) {
   gndStart = 0;           // next we'll store the ground-plane;
   for(i=0,j=0; j< gndVerts.length; i++, j++) {
     verticesColors[i] = gndVerts[j];
-    }
-  forestStart = i;              // we store the forest first.
-  for(j=0; j< forestVerts.length; i++,j++) {
-    verticesColors[i] = forestVerts[j];
     }
   armStart = i;
   for (j=0; j < armVerts.length; i++,j++)
@@ -534,16 +514,11 @@ function drawMyScene(myGL, currentAngle, myu_ViewMatrix, myViewMatrix, modelMatr
   // (where +y is 'up', as defined by our setLookAt() function call above...)
  // myGL.uniformMatrix4fv(u_NormalMatrix, false, normalMatrix.elements);
   myGL.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
-  myGL.drawArrays(myGL.TRIANGLES,         // use this drawing primitive, and
-                forestStart/floatsPerVertex,  // start at this vertex number, and
-                forestVerts.length/floatsPerVertex);  // draw this many vertices.
 
   pushMatrix(modelMatrix);
 
-  modelMatrix.setTranslate(-0.5,0.2,0.0);
+  modelMatrix.setTranslate(-0.5,-0.1,0.0);
   modelMatrix.rotate(currentAngle+25,0,1,0);
-
-
   normalMatrix.setInverseOf(modelMatrix);
   normalMatrix.transpose();
   // Pass the transformation matrix for normals to u_NormalMatrix
@@ -554,8 +529,20 @@ function drawMyScene(myGL, currentAngle, myu_ViewMatrix, myViewMatrix, modelMatr
                 armStart/floatsPerVertex,
                 armVerts.length/floatsPerVertex);
 
+  modelMatrix.translate(0.0,1.2,0);
+  normalMatrix.setInverseOf(modelMatrix);
+  normalMatrix.transpose();
+  // Pass the transformation matrix for normals to u_NormalMatrix
+  myGL.uniformMatrix4fv(u_NormalMatrix, false, normalMatrix.elements);
+  myGL.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
+  myGL.drawArrays(myGL.TRIANGLES,
+                armStart/floatsPerVertex,
+                armVerts.length/floatsPerVertex);
+
 
   modelMatrix = popMatrix();
+  //modelMatrix.setIdentity();
+  myGL.uniformMatrix4fv(u_NormalMatrix, false, normalMatrix.elements);
   myGL.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
   
  // Rotate to make a new set of 'world' drawing axes: 
