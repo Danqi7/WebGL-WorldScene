@@ -485,6 +485,10 @@ function makeSphere() {
           sphVerts[j+5]=Math.random();// equColr[1]; 
           sphVerts[j+6]=Math.random();// equColr[2];          
       }
+      sphVerts[j+7] = 0;
+      sphVerts[j+8] = 0;
+      sphVerts[j+9] = 1;
+      sphVerts[j+10] = 0;
     }
   }
 }
@@ -703,8 +707,8 @@ function makeCylinder() {
       cylVerts[j+2] =-1.0;  // z
       cylVerts[j+3] = 1.0;  // w.
       // r,g,b = topColr[]
-      cylVerts[j+4]=botColr[0]; 
-      cylVerts[j+5]=botColr[1]; 
+      cylVerts[j+4]=botColr[1]; 
+      cylVerts[j+5]=botColr[0]; 
       cylVerts[j+6]=botColr[2];   
     }
     else {        // position odd#'d vertices at center of the bottom cap:
@@ -712,8 +716,8 @@ function makeCylinder() {
       cylVerts[j+1] = 0.0;  
       cylVerts[j+2] =-1.0; 
       cylVerts[j+3] = 1.0;      // r,g,b = botColr[]
-      cylVerts[j+4]=botColr[0]; 
-      cylVerts[j+5]=botColr[1]; 
+      cylVerts[j+4]=botColr[1]; 
+      cylVerts[j+5]=botColr[0]; 
       cylVerts[j+6]=botColr[2];
     }
 
@@ -807,6 +811,22 @@ console.log("what the heck: ", armVerts.length);
 
 }
 
+function makeAxes()
+{
+  axesVerts = new Float32Array([
+     0.0,  0.0,  0.0, 1.0,    0.3,  0.3,  0.3,         0,0,1,0,// X axis line (origin: gray)
+     1.3,  0.0,  0.0, 1.0,    1.0,  0.3,  0.3,         0,0,1,0,//              (endpoint: red)
+     
+     0.0,  0.0,  0.0, 1.0,    0.3,  0.3,  0.3,         0,0,1,0,// Y axis line (origin: white)
+     0.0,  1.3,  0.0, 1.0,    0.3,  1.0,  0.3,         0,0,1,0,//            (endpoint: green)
+
+     0.0,  0.0,  0.0, 1.0,    0.3,  0.3,  0.3,         0,0,1,0,// Z axis line (origin:white)
+     0.0,  0.0,  1.3, 1.0,    0.3,  0.3,  1.0,         0,0,1,0,//            (endpoint: blue)
+
+    ])
+  console.log("number of axes", axesVerts.length);
+}
+
 function initVertexBuffers(gl) {
 //==============================================================================
   
@@ -817,10 +837,12 @@ function initVertexBuffers(gl) {
   makeDiamond();
   makeRock();
   makeCylinder();
+  makeSphere();
+  makeAxes();
 
   // How much space to store all the shapes in one array?
   // (no 'var' means this is a global variable)
-  mySiz = gndVerts.length + armVerts.length + diaVerts.length + rockVerts.length + cylVerts.length;
+  mySiz = gndVerts.length + armVerts.length + diaVerts.length + rockVerts.length + cylVerts.length + sphVerts.length + axesVerts.length;
 
   //console.log("forestVerts numeber is ", forestVerts.length);
   console.log("gndVerts numeber is ", gndVerts.length);
@@ -853,10 +875,21 @@ function initVertexBuffers(gl) {
     verticesColors[i] = rockVerts[j];
   }
   cylStart = i;
-  for (j=0; j < rockVerts.length; i++,j++)
+  for (j=0; j < cylVerts.length; i++,j++)
   {
     verticesColors[i] = cylVerts[j];
   }
+  sphStart = i;
+  for (j=0; j < sphVerts.length; i++,j++)
+  {
+    verticesColors[i] = sphVerts[j];
+  }
+  axesStart = i;
+  for (j=0; j < axesVerts.length; i++,j++)
+  {
+    verticesColors[i] = axesVerts[j];
+  }
+
 
     
 
@@ -1063,6 +1096,11 @@ function drawMyScene(myGL, currentAngle, myu_ViewMatrix, myViewMatrix, modelMatr
   myGL.drawArrays(myGL.TRIANGLES,
                 armStart/floatsPerVertex,
                 armVerts.length/floatsPerVertex);
+  //pushMatrix(modelMatrix);
+  //modelMatrix.
+  myGL.drawArrays(myGL.LINES,
+                axesStart/floatsPerVertex,
+                axesVerts.length/floatsPerVertex);
 
   //=====second arm base==========
   modelMatrix.rotate(currentAngle*0.13, 0,0,1);
@@ -1231,6 +1269,30 @@ function drawMyScene(myGL, currentAngle, myu_ViewMatrix, myViewMatrix, modelMatr
                 cylStart/floatsPerVertex,
                 cylVerts.length/floatsPerVertex);
 
+  //=======sphere=======
+  modelMatrix = popMatrix();
+  pushMatrix(modelMatrix);
+  modelMatrix.scale(0.8,0.8,-0.8);              // convert to left-handed coord sys
+                                          // to match WebGL display canvas.
+  modelMatrix.scale(0.3,0.3,0.3);
+  modelMatrix.translate(1,0,-5);
+  modelMatrix.rotate(currentAngle,0,1,0);
+  myGL.uniformMatrix4fv(u_NormalMatrix, false, normalMatrix.elements);
+  myGL.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
+  myGL.drawArrays(myGL.TRIANGLE_STRIP,
+                sphStart/floatsPerVertex,
+                sphVerts.length/floatsPerVertex);
+
+  //======Axes=============
+  modelMatrix = popMatrix();
+  pushMatrix(modelMatrix);
+  modelMatrix.scale(3.0,3.0,3.0);
+  //modelMatrix.translate();
+  myGL.uniformMatrix4fv(u_NormalMatrix, false, normalMatrix.elements);
+  myGL.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
+  myGL.drawArrays(myGL.LINES,
+                axesStart/floatsPerVertex,
+                axesVerts.length/floatsPerVertex);
 
 
 
@@ -1239,7 +1301,7 @@ function drawMyScene(myGL, currentAngle, myu_ViewMatrix, myViewMatrix, modelMatr
   //modelMatrix.setIdentity();
   myGL.uniformMatrix4fv(u_NormalMatrix, false, normalMatrix.elements);
   myGL.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
-  
+
  // Rotate to make a new set of 'world' drawing axes: 
  // old one had "+y points upwards", but
   myViewMatrix.rotate(-90.0, 1,0,0);  // new one has "+z points upwards",
