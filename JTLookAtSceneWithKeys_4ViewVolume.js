@@ -55,6 +55,8 @@ function main()
   // Retrieve <canvas> element
   var canvas = document.getElementById('webgl');
 
+  //winResize(currentAngle, u_ViewMatrix, viewMatrix, ModelMatrix, u_ModelMatrix, normalMatrix, u_NormalMatrix, projMatrix, u_ProjMatrix);
+  winResize();
   // Get the rendering context for WebGL
   var gl = getWebGLContext(canvas);
   if (!gl) {
@@ -144,7 +146,8 @@ function main()
   // ANIMATION: create 'tick' variable whose value is this function:
   //----------------- 
   var tick = function() {
-    currentAngle = animate(currentAngle);  // Update the rotation angle
+    currentAngle = animate(currentAngle);  
+    //winResize(gl, currentAngle, u_ViewMatrix, viewMatrix, ModelMatrix, u_ModelMatrix, normalMatrix, u_NormalMatrix, projMatrix, u_ProjMatrix);
     draw(gl, currentAngle, u_ViewMatrix, viewMatrix, ModelMatrix, u_ModelMatrix, normalMatrix, u_NormalMatrix, projMatrix, u_ProjMatrix);   // Draw shapes
   // console.log('currentAngle=',currentAngle); // put text in console.
     requestAnimationFrame(tick, canvas);   
@@ -184,7 +187,7 @@ function makeGroundGrid() {
 
   var xcount = 100;     // # of lines to draw in x,y to make the grid.
   var ycount = 100;   
-  var xymax = 50.0;     // grid size; extends to cover +/-xymax in x and y.
+  var xymax = 100.0;     // grid size; extends to cover +/-xymax in x and y.
   var xColr = new Float32Array([1.0, 1.0, 0.3]);  // bright yellow
   var yColr = new Float32Array([0.5, 1.0, 0.5]);  // bright green.
   
@@ -948,7 +951,7 @@ function initVertexBuffers(gl) {
   return mySiz/floatsPerVertex; // return # of vertices
 }
 
-var g_EyeX = 0.20, g_EyeY = 0.25, g_EyeZ = 4.25; 
+var g_EyeX = 0.0, g_EyeY = 0.25, g_EyeZ = 4.25; 
 // Global vars for Eye position. 
 // NOTE!  I moved eyepoint BACKWARDS from the forest: from g_EyeZ=0.25
 // a distance far enough away to see the whole 'forest' of trees within the
@@ -967,7 +970,16 @@ function keydown(ev, gl, currentAngle, u_ViewMatrix, viewMatrix, ModelMatrix, u_
     if (ev.keyCode == 37) { // The left arrow key was pressed
 //      g_EyeX -= 0.01;
         g_EyeX -= 0.1;    // INCREASED for perspective camera)
-    } else { return; } // Prevent the unnecessary drawing
+    } // Prevent the unnecessary drawing
+    if (ev.keyCode == 38){
+      g_EyeY += 0.1;
+    }else
+    if (ev.keyCode == 40){
+      g_EyeY -= 0.1;
+    }
+    else{
+      return;
+    }
     draw(gl, currentAngle, u_ViewMatrix, viewMatrix, ModelMatrix, u_ModelMatrix, normalMatrix, u_NormalMatrix, projMatrix, u_ProjMatrix);    
 }
 
@@ -1065,7 +1077,7 @@ function drawMyScene(myGL, currentAngle, myu_ViewMatrix, myViewMatrix, modelMatr
     // REPLACE this orthographic camera matrix:
   projMatrix.setOrtho(-1.0, 1.0,          // left,right;
                       -1.0, 1.0,          // bottom, top;
-                      0.0, 2000.0);       // near, far; (always >=0)
+                      0.0, 6000.0);       // near, far; (always >=0)
     
   myGL.uniformMatrix4fv(u_ProjMatrix, false, projMatrix.elements);
   }
@@ -1182,6 +1194,7 @@ function drawMyScene(myGL, currentAngle, myu_ViewMatrix, myViewMatrix, modelMatr
   modelMatrix = popMatrix();
   pushMatrix(modelMatrix);
   //======diamond=========
+  normalMatrix.setIdentity();
   modelMatrix.rotate(-90,0,1,0);
   modelMatrix.rotate(-45,1,0,0);
   modelMatrix.scale(0.5,0.5,0.5);
@@ -1321,11 +1334,25 @@ function drawMyScene(myGL, currentAngle, myu_ViewMatrix, myViewMatrix, modelMatr
 
 }
 
-function jointMotion()
-{
-  if (currentAngle > 45)
-      return;
+function winResize() {
+//==============================================================================
+// Called when user re-sizes their browser window , because our HTML file
+// contains:  <body onload="main()" onresize="winResize()">
+
+  var nuCanvas = document.getElementById('webgl');  // get current canvas
+  var nuGL = getWebGLContext(nuCanvas);             // and context:
+
+  //Report our current browser-window contents:
+
+  console.log('nuCanvas width,height=', nuCanvas.width, nuCanvas.height);   
+ console.log('Browser window: innerWidth,innerHeight=', 
+                                innerWidth, innerHeight); // http://www.w3schools.com/jsref/obj_window.asp
+
+  
+  //Make canvas fill the top 3/4 of our browser window:
+  nuCanvas.width = innerWidth;
+  nuCanvas.height = innerHeight*3/4;
+  //IMPORTANT!  need to re-draw screen contents
+  //draw(, currentAngle, u_ViewMatrix, viewMatrix, ModelMatrix, u_ModelMatrix, normalMatrix, u_NormalMatrix, projMatrix, u_ProjMatrix); 
+     
 }
-
-
-
