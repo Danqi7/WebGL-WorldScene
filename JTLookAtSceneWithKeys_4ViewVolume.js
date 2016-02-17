@@ -1102,7 +1102,7 @@ function drawMyScene(myGL, currentAngle, myu_ViewMatrix, myViewMatrix, modelMatr
 
 
   //=======arm base===========
-  modelMatrix.setTranslate(-0.5,-0.2,1.0);
+  modelMatrix.setTranslate(-0.5,-0.45,1.0);
   modelMatrix.rotate(currentAngle+25,0,1,0);
   modelMatrix.scale(0.3,0.3,0.3);
   normalMatrix.setInverseOf(modelMatrix);
@@ -1116,11 +1116,16 @@ function drawMyScene(myGL, currentAngle, myu_ViewMatrix, myViewMatrix, modelMatr
                 armVerts.length/floatsPerVertex);
   //pushMatrix(modelMatrix);
   //modelMatrix.
+  pushMatrix(modelMatrix);
+  modelMatrix.translate(0,-0.455,0);
+  myGL.uniformMatrix4fv(u_NormalMatrix, false, normalMatrix.elements);
+  myGL.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
   myGL.drawArrays(myGL.LINES,
                 axesStart/floatsPerVertex,
                 axesVerts.length/floatsPerVertex);
 
   //=====second arm base==========
+  modelMatrix = popMatrix();
   modelMatrix.rotate(currentAngle*0.13, 0,0,1);
   modelMatrix.translate(0.0,0.85,0.0);
   modelMatrix.scale(0.7,0.7,0.7);
@@ -1273,7 +1278,7 @@ function drawMyScene(myGL, currentAngle, myu_ViewMatrix, myViewMatrix, modelMatr
   pushMatrix(modelMatrix);
   modelMatrix.scale(0.2,0.2,0.2);
   modelMatrix.rotate(-90, 1,0,0);
-  modelMatrix.translate(3,-2,0);
+  modelMatrix.translate(3,-2,-2);
   myGL.uniformMatrix4fv(u_NormalMatrix, false, normalMatrix.elements);
   myGL.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix.elements);
   myGL.drawArrays(myGL.TRIANGLE_STRIP,
@@ -1305,6 +1310,7 @@ function drawMyScene(myGL, currentAngle, myu_ViewMatrix, myViewMatrix, modelMatr
   //======Axes=============
   modelMatrix = popMatrix();
   pushMatrix(modelMatrix);
+  modelMatrix.setTranslate(0,-0.6,0);
   modelMatrix.scale(3.0,3.0,3.0);
   //modelMatrix.translate();
   myGL.uniformMatrix4fv(u_NormalMatrix, false, normalMatrix.elements);
@@ -1346,19 +1352,19 @@ function winResize(gl, currentAngle, u_ViewMatrix, viewMatrix, ModelMatrix, u_Mo
 // contains:  <body onload="main()" onresize="winResize()">
 
   var nuCanvas = document.getElementById('webgl');  // get current canvas
-  var nuGL = getWebGLContext(nuCanvas);             // and context:
+  // var nuGL = getWebGLContext(nuCanvas);             // and context:
 
   //Report our current browser-window contents:
 
-  console.log('nuCanvas width,height=', nuCanvas.width, nuCanvas.height);   
- console.log('Browser window: innerWidth,innerHeight=', 
-                                innerWidth, innerHeight); // http://www.w3schools.com/jsref/obj_window.asp
+  // console.log('nuCanvas width,height=', nuCanvas.width, nuCanvas.height);   
+ // console.log('Browser window: innerWidth,innerHeight=', 
+                                // innerWidth, innerHeight); // http://www.w3schools.com/jsref/obj_window.asp
 
   
   //Make canvas fill the top 3/4 of our browser window:
-  nuCanvas.width = innerWidth;
-  nuCanvas.height = innerHeight*3/4;
+  nuCanvas.width = Math.min(innerWidth*0.75, innerHeight*1.5);
+  nuCanvas.height = Math.min(innerWidth*0.75/2, innerHeight*0.75);
   //IMPORTANT!  need to re-draw screen contents
-  draw(gl, currentAngle, u_ViewMatrix, viewMatrix, ModelMatrix, u_ModelMatrix, normalMatrix, u_NormalMatrix, projMatrix, u_ProjMatrix, innerWidth, innerHeight*3/4); 
+  draw(gl, currentAngle, u_ViewMatrix, viewMatrix, ModelMatrix, u_ModelMatrix, normalMatrix, u_NormalMatrix, projMatrix, u_ProjMatrix, nuCanvas.width, nuCanvas.height); 
      
 }
