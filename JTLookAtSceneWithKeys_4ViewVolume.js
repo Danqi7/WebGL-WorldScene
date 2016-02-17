@@ -56,7 +56,7 @@ function main()
   var canvas = document.getElementById('webgl');
 
   //winResize(currentAngle, u_ViewMatrix, viewMatrix, ModelMatrix, u_ModelMatrix, normalMatrix, u_NormalMatrix, projMatrix, u_ProjMatrix);
-  winResize();
+  //winResize();
   // Get the rendering context for WebGL
   var gl = getWebGLContext(canvas);
   if (!gl) {
@@ -147,8 +147,8 @@ function main()
   //----------------- 
   var tick = function() {
     currentAngle = animate(currentAngle);  
-    //winResize(gl, currentAngle, u_ViewMatrix, viewMatrix, ModelMatrix, u_ModelMatrix, normalMatrix, u_NormalMatrix, projMatrix, u_ProjMatrix);
-    draw(gl, currentAngle, u_ViewMatrix, viewMatrix, ModelMatrix, u_ModelMatrix, normalMatrix, u_NormalMatrix, projMatrix, u_ProjMatrix);   // Draw shapes
+    winResize(gl, currentAngle, u_ViewMatrix, viewMatrix, ModelMatrix, u_ModelMatrix, normalMatrix, u_NormalMatrix, projMatrix, u_ProjMatrix);
+    //draw(gl, currentAngle, u_ViewMatrix, viewMatrix, ModelMatrix, u_ModelMatrix, normalMatrix, u_NormalMatrix, projMatrix, u_ProjMatrix);   // Draw shapes
   // console.log('currentAngle=',currentAngle); // put text in console.
     requestAnimationFrame(tick, canvas);   
                       // Request that the browser re-draw the webpage
@@ -965,17 +965,17 @@ function keydown(ev, gl, currentAngle, u_ViewMatrix, viewMatrix, ModelMatrix, u_
 
     if(ev.keyCode == 39) { // The right arrow key was pressed
 //      g_EyeX += 0.01;
-        g_EyeX += 0.1;    // INCREASED for perspective camera)
+        g_EyeX += 0.05;    // INCREASED for perspective camera)
     } else 
     if (ev.keyCode == 37) { // The left arrow key was pressed
 //      g_EyeX -= 0.01;
-        g_EyeX -= 0.1;    // INCREASED for perspective camera)
+        g_EyeX -= 0.05;    // INCREASED for perspective camera)
     } // Prevent the unnecessary drawing
     if (ev.keyCode == 38){
-      g_EyeY += 0.1;
+      g_EyeY += 0.05;
     }else
     if (ev.keyCode == 40){
-      g_EyeY -= 0.1;
+      g_EyeY -= 0.05;
     }
     else{
       return;
@@ -983,12 +983,13 @@ function keydown(ev, gl, currentAngle, u_ViewMatrix, viewMatrix, ModelMatrix, u_
     draw(gl, currentAngle, u_ViewMatrix, viewMatrix, ModelMatrix, u_ModelMatrix, normalMatrix, u_NormalMatrix, projMatrix, u_ProjMatrix);    
 }
 
-function draw(gl, currentAngle, u_ViewMatrix, viewMatrix, ModelMatrix, u_ModelMatrix, normalMatrix, u_NormalMatrix, projMatrix, u_ProjMatrix) {
+function draw(gl, currentAngle, u_ViewMatrix, viewMatrix, ModelMatrix, u_ModelMatrix, normalMatrix, u_NormalMatrix, projMatrix, u_ProjMatrix, width, height) {
 //==============================================================================
   
   // Clear <canvas> color AND DEPTH buffer
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
   var canvas = document.getElementById("webgl")
+  //winResize();
   //normalMatrix.setIdentity();
   // Using OpenGL/ WebGL 'viewports':
   // these determine the mapping of CVV to the 'drawing context',
@@ -1003,8 +1004,10 @@ function draw(gl, currentAngle, u_ViewMatrix, viewMatrix, ModelMatrix, u_ModelMa
   // to a smaller one:
   gl.viewport(0,                              // Viewport lower-left corner
               0,                              // (x,y) location(in pixels)
-              gl.drawingBufferWidth/2,        // viewport width, height.
-              gl.drawingBufferHeight/2);
+              //gl.drawingBufferWidth/2,
+              width/2,        // viewport width, height.
+              //gl.drawingBufferHeight/2
+              height);
   
   // Set the matrix to be used for to set the camera view
   viewMatrix.setLookAt(g_EyeX, g_EyeY, g_EyeZ,  // eye position
@@ -1015,14 +1018,17 @@ function draw(gl, currentAngle, u_ViewMatrix, viewMatrix, ModelMatrix, u_ModelMa
   gl.uniformMatrix4fv(u_ViewMatrix, false, viewMatrix.elements);
 
   // Draw the scene:
-  drawMyScene(gl, currentAngle, u_ViewMatrix, viewMatrix, ModelMatrix, u_ModelMatrix, normalMatrix, u_NormalMatrix, projMatrix, u_ProjMatrix, 1);
+  drawMyScene(gl, currentAngle, u_ViewMatrix, viewMatrix, ModelMatrix, u_ModelMatrix, normalMatrix, u_NormalMatrix, projMatrix, u_ProjMatrix, 1, width, height);
  
     // Draw in the SECOND of several 'viewports'
   //------------------------------------------
-  gl.viewport(gl.drawingBufferWidth/2,        // Viewport lower-left corner
+  gl.viewport(//gl.drawingBufferWidth/2,
+              width/2,        // Viewport lower-left corner
               0,                              // location(in pixels)
-              gl.drawingBufferWidth/2,        // viewport width, height.
-              gl.drawingBufferHeight/2);
+              //gl.drawingBufferWidth/2,
+              width/2,
+              height);        // viewport width, height.
+              //gl.drawingBufferHeight/2);
 
    
   // but use a different 'view' matrix:
@@ -1035,7 +1041,7 @@ function draw(gl, currentAngle, u_ViewMatrix, viewMatrix, ModelMatrix, u_ModelMa
   gl.uniformMatrix4fv(u_ViewMatrix, false, viewMatrix.elements);
 
   // Draw the scene:
-  drawMyScene(gl, currentAngle, u_ViewMatrix, viewMatrix, ModelMatrix, u_ModelMatrix, normalMatrix, u_NormalMatrix, projMatrix, u_ProjMatrix, 0);
+  drawMyScene(gl, currentAngle, u_ViewMatrix, viewMatrix, ModelMatrix, u_ModelMatrix, normalMatrix, u_NormalMatrix, projMatrix, u_ProjMatrix, 0, width, height);
     
         // Draw in the THIRD of several 'viewports'
   //------------------------------------------
@@ -1057,7 +1063,7 @@ function draw(gl, currentAngle, u_ViewMatrix, viewMatrix, ModelMatrix, u_ModelMa
 
 }
 
-function drawMyScene(myGL, currentAngle, myu_ViewMatrix, myViewMatrix, modelMatrix, u_ModelMatrix, normalMatrix, u_NormalMatrix, projMatrix, u_ProjMatrix, times) {
+function drawMyScene(myGL, currentAngle, myu_ViewMatrix, myViewMatrix, modelMatrix, u_ModelMatrix, normalMatrix, u_NormalMatrix, projMatrix, u_ProjMatrix, times, width, height) {
 //===============================================================================
 // Called ONLY from within the 'draw()' function
 // Assumes already-correctly-set View matrix and Proj matrix; 
@@ -1069,7 +1075,7 @@ function drawMyScene(myGL, currentAngle, myu_ViewMatrix, myViewMatrix, modelMatr
   var canvas = document.getElementById("webgl")
   if (times == 1)
   {
-  projMatrix.setPerspective(30, canvas.width/canvas.height, 1, 100);
+  projMatrix.setPerspective(30, width/height, 1, 100);
   myGL.uniformMatrix4fv(u_ProjMatrix, false, projMatrix.elements);
   }
   else
@@ -1077,7 +1083,7 @@ function drawMyScene(myGL, currentAngle, myu_ViewMatrix, myViewMatrix, modelMatr
     // REPLACE this orthographic camera matrix:
   projMatrix.setOrtho(-1.0, 1.0,          // left,right;
                       -1.0, 1.0,          // bottom, top;
-                      0.0, 6000.0);       // near, far; (always >=0)
+                      -2, 6000.0);       // near, far; (always >=0)
     
   myGL.uniformMatrix4fv(u_ProjMatrix, false, projMatrix.elements);
   }
@@ -1334,7 +1340,7 @@ function drawMyScene(myGL, currentAngle, myu_ViewMatrix, myViewMatrix, modelMatr
 
 }
 
-function winResize() {
+function winResize(gl, currentAngle, u_ViewMatrix, viewMatrix, ModelMatrix, u_ModelMatrix, normalMatrix, u_NormalMatrix, projMatrix, u_ProjMatrix) {
 //==============================================================================
 // Called when user re-sizes their browser window , because our HTML file
 // contains:  <body onload="main()" onresize="winResize()">
@@ -1353,6 +1359,6 @@ function winResize() {
   nuCanvas.width = innerWidth;
   nuCanvas.height = innerHeight*3/4;
   //IMPORTANT!  need to re-draw screen contents
-  //draw(, currentAngle, u_ViewMatrix, viewMatrix, ModelMatrix, u_ModelMatrix, normalMatrix, u_NormalMatrix, projMatrix, u_ProjMatrix); 
+  draw(gl, currentAngle, u_ViewMatrix, viewMatrix, ModelMatrix, u_ModelMatrix, normalMatrix, u_NormalMatrix, projMatrix, u_ProjMatrix, innerWidth, innerHeight*3/4); 
      
 }
